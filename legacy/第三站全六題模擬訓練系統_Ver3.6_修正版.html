@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>乙級室內配線技術士——第三站全六題模擬訓練系統 Ver3.6</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:"Microsoft JhengHei",Arial,sans-serif;background:#141414;color:#fff;margin:0;padding:10px;display:flex;flex-direction:column;align-items:center}
+  h1{color:#f1c40f;margin:5px 0;font-size:20px;text-shadow:1px 1px 2px #000}
+  .subtitle{color:#bdc3c7;font-size:12px;margin-bottom:8px}
+  .qsel{display:flex;gap:5px;margin-bottom:10px;background:#222;padding:6px;border-radius:6px;border:1px solid #444;flex-wrap:wrap;justify-content:center}
+  .qbtn{padding:7px 12px;border:none;border-radius:4px;background:#333;color:#ccc;font-weight:700;cursor:pointer;font-size:12px;line-height:1.4}
+  .qbtn.active{background:#f1c40f;color:#141414}
+  .qbtn:hover{background:#555;color:#fff}
+  .wrap{display:flex;gap:12px;max-width:1460px;width:100%}
+  canvas{background:#1a1a1a;border:2px solid #3a3a3a;border-radius:8px;cursor:crosshair;flex-shrink:0}
+  .panel{width:280px;flex-shrink:0;background:#262626;padding:12px;border-radius:8px;border:1px solid #3a3a3a;display:flex;flex-direction:column;gap:9px;max-height:860px;overflow-y:auto}
+  .panel h3{color:#f1c40f;margin:0;font-size:13px}
+  .mrow{background:#1a1a1a;padding:8px;border-radius:5px;border:1px solid #444;display:flex;align-items:center;gap:10px}
+  .go{display:flex;align-items:center;gap:4px;font-weight:700;cursor:pointer;font-size:12px}
+  .g14{color:#5dade2}.g22{color:#e67e22}
+  .guide{background:#1a1a1a;padding:9px;border-left:4px solid #f1c40f;font-size:11.5px;line-height:1.65;white-space:pre-line}
+  .btn{padding:8px;border:none;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .ba{background:#2471a3;color:#fff}.ba:hover{background:#1a5276}
+  .bp{background:#d35400;color:#fff}.bp:hover{background:#a04000}
+  .bp.on{background:#27ae60}.bp.on:hover{background:#1e8449}
+  .bq{background:#7d3c98;color:#fff}.bq:hover{background:#6c3483}
+  .br{background:#c0392b;color:#fff}.br:hover{background:#a93226}
+  .bc{background:#239b56;color:#fff}.bc:hover{background:#1d8348}
+  .ag{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .res{padding:9px;border-radius:5px;font-weight:700;display:none;white-space:pre-line;font-size:12px;line-height:1.6}
+  .ok{background:#1e8449;color:#fff}.er{background:#922b21;color:#fff}
+  .dh{display:none;background:#7d3c98;color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:4px;text-align:center}
+  .dh.show{display:block}
+  .leg{font-size:11px;color:#666;line-height:1.85}
+  .tip{font-size:11px;color:#555;line-height:1.6;background:#1a1a1a;padding:8px;border-radius:4px}
+</style>
+</head>
+<body>
+<div style="text-align:center;margin-bottom:6px">
+  <h1>乙級室內配線技術士——第三站全六題模擬訓練系統</h1>
+  <div class="subtitle">Ver 3.6 ｜外殼G串接後引至(45) ｜ LA串接後引至(99) ｜ 連線連點兩次可刪除</div>
+</div>
+<div class="qsel">
+  <button class="qbtn active" id="qb1" onclick="switchQuiz(1)">試題一<br><small>V-V 220V</small></button>
+  <button class="qbtn" id="qb2" onclick="switchQuiz(2)">試題二<br><small>V-V 燈力</small></button>
+  <button class="qbtn" id="qb3" onclick="switchQuiz(3)">試題三<br><small>Δ-Δ 220V</small></button>
+  <button class="qbtn" id="qb4" onclick="switchQuiz(4)">試題四<br><small>開Y-V 燈力</small></button>
+  <button class="qbtn" id="qb5" onclick="switchQuiz(5)">試題五<br><small>開Y-V 220V</small></button>
+  <button class="qbtn" id="qb6" onclick="switchQuiz(6)">試題六<br><small>Δ-Y 380V</small></button>
+</div>
+<div class="wrap">
+  <canvas id="wireCanvas" width="980" height="860"></canvas>
+  <div class="panel">
+    <h3 id="qtitle">載入中…</h3>
+    <div class="mrow">
+      <span style="font-size:11px;color:#f1c40f;font-weight:700">線徑：</span>
+      <label class="go g14"><input type="radio" name="g" value="14" onchange="CG=14"> 14mm²</label>
+      <label class="go g22"><input type="radio" name="g" value="22" checked onchange="CG=22"> 22mm²</label>
+    </div>
+    <div id="qguide" class="guide"></div>
+    <div class="ag">
+      <button class="btn ba" onclick="showAnswer()">顯示標準答案</button>
+      <button class="btn bp" id="pbtn" onclick="togglePreset()">顯示考場配妥</button>
+    </div>
+    <div class="ag">
+      <button class="btn bq" onclick="enterQuiz()">進入測驗模式</button>
+      <button class="btn br" onclick="clearWires()">清除連線</button>
+    </div>
+    <button class="btn bc" style="width:100%" onclick="checkWiring()">配線審查</button>
+    <div id="dh" class="dh">連線已選取（高亮）— 再點一次刪除 或按 Delete</div>
+    <div id="res" class="res"></div>
+    <div class="leg">
+      <div>■ <span style="color:#b87333">銅棕弧線</span>＝X2-X3銅片內短（固定）</div>
+      <div>- - <span style="color:#556677">灰虛線</span>＝考場配妥（Q3/Q6 Δ跳線）</div>
+      <div>■ <span style="color:#f1c40f">黃</span>＝高壓線 22mm²</div>
+      <div>■ <span style="color:#5dade2">藍</span>＝LA引線 14mm²</div>
+      <div>■ <span style="color:#2ecc71">綠</span>＝接地線</div>
+      <div>■ <span style="color:#e67e22">橙</span>＝低壓線</div>
+      <div>○ <span style="color:#f1c40f">黃色框</span>＝審查缺失節點</div>
+      <div>? <span style="color:#fff">白色虛線</span>＝審查後應接位置提示</div>
+    </div>
+    <div class="tip">連線：點圓圈A → 點圓圈B<br>刪線：在連線上點兩次（第一次高亮，第二次刪除）<br>也可選取後按 Delete 鍵 ｜ Esc 取消選取</div>
+  </div>
+</div>
+<script>
+// ═══════════════════ 全域狀態 ═══════════════════
+let canvas,ctx,RES,DH;
+let nodes=[],conns=[],presets=[];
+let selN=null,selC=null;
+let CG=22,CQ=1,showP=false;
+let errN=new Set(),errC=new Set();
+let hintConns=[];   // 審查後：應接但未接的連線提示（白色虛線）
+
+// ═══════════════════ 試題規格 ═══════════════════
+const SP={
+  1:{title:"試題一：V-V 3φ3W 220V（低壓共用點接地）",
+     guide:"【考場配妥】高壓側H端子跳線、X2-X3銅片內短\n【考生施作】\n①幹線A/B/C 活線夾 → CO電源側\n②CO電源側 → LA高壓端（平行分接）\n③LA接地端：A↓→B↓→C↓串接 → 管口(99) [14mm²]\n④外殼G：TR1G(203)→TR2G(206)串接，TR2G→管口(45)\n⑤X4(304)↔X1(305)短接＝共用點 → 行1\n⑥X1(301)→行2  X4(308)→行3\n⑦行1 → 系統被接地口(48)",
+     tr:2,sg:false,rows:["行1：被接地相 N","行2：動力 A","行3：動力 B","行4：（空）"]},
+  2:{title:"試題二：V-V 3φ4W 110/220V 燈力",
+     guide:"【考場配妥】高壓側H端子跳線、X2-X3銅片內短\n【考生施作】\n①幹線A/B/C 活線夾 → CO電源側\n②CO電源側 → LA高壓端\n③LA接地端：A↓→B↓→C↓串接 → 管口(99) [14mm²]\n④外殼G：TR1G(203)→TR2G(206)串接，TR2G→管口(45)\n⑤工作中性點 X2/X3(302/303) → 行1\n⑥X1(301)→行2  X1(305)→行3  X4(308)→行4\n⑦行1 → 系統被接地口(48)",
+     tr:2,sg:false,rows:["行1：被接地中性線 N","行2：燈力 A","行3：燈力 B","行4：動力 C"]},
+  3:{title:"試題三：Δ-Δ 3φ3W 220V",
+     guide:"【考場配妥】高壓Δ跳線（肚上三跳）、X2-X3銅片內短\n【考生施作】\n①幹線A/B/C → CO電源側  ②CO電源側 → LA高壓端\n③LA接地端：A↓→B↓→C↓串接 → 管口(99)\n④CO負載側 → 各TR H1主端子\n⑤外殼G：TR1G(203)→TR2G(206)→TR3G(209)串接，TR3G→管口(45)\n⑥低壓Δ閉合：X4(304)↔X1(305)、X4(308)↔X1(309)、X4(312)↔X1(301)\n⑦接地頂點(301/312短接處)→行1  各相出力→行2/3\n⑧行1 → (48)",
+     tr:3,sg:false,rows:["行1：被接地相 N","行2：動力 A","行3：動力 B","行4：（空）"]},
+  4:{title:"試題四：開Y-V 3φ4W 燈力（單套管）",
+     guide:"【考場配妥】X2-X3銅片內短（僅此一項）\n【單套管說明】每台TR只有H1一根高壓套管，N端在內部接外殼\n【考生施作】\n①幹線A/B → CO電源側  ②CO電源側 → LA高壓端\n③LA接地端：A↓→B↓串接 → 管口(99) [14mm²]\n④CO負載側 → H1(201)、H1(204)\n⑤外殼G：TR1G(203)↔TR2G(206)互接（=開Y中性點），再引一條 TR2G(206)→管口(45)\n⑥工作中性點(302/303) → 行1\n⑦X1(301)→行2  X1(305)→行3  X4(308)→行4\n⑧行1 → (48)",
+     tr:2,sg:true,rows:["行1：被接地中性線 N","行2：燈力 A","行3：燈力 B","行4：動力 C"]},
+  5:{title:"試題五：開Y-V 3φ3W 220V（單套管）",
+     guide:"【考場配妥】X2-X3銅片內短（僅此一項）\n【單套管說明】每台TR只有H1一根高壓套管，N端在內部接外殼\n【考生施作】\n①幹線A/B → CO電源側  ②CO電源側 → LA高壓端\n③LA接地端：A↓→B↓串接 → 管口(99) [14mm²]\n④CO負載側 → H1(201)、H1(204)\n⑤外殼G：TR1G(203)↔TR2G(206)互接（=開Y中性點），再引一條 TR2G(206)→管口(45)\n⑥X4(304)↔X1(305)短接（共用點）→ 行1\n⑦X1(301)→行2  X4(308)→行3\n⑧行1 → (48)",
+     tr:2,sg:true,rows:["行1：被接地相 N","行2：動力 A","行3：動力 B","行4：（空）"]},
+  6:{title:"試題六：Δ-Y 3φ4W 220/380V",
+     guide:"【考場配妥】高壓Δ跳線（肚上三跳）、X2-X3銅片內短\n【考生施作】\n①幹線A/B/C → CO電源側  ②CO電源側 → LA高壓端\n③LA接地端：A↓→B↓→C↓串接 → 管口(99)\n④CO負載側 → 各TR H1主端子\n⑤外殼G：TR1G(203)→TR2G(206)→TR3G(209)串接，TR3G→管口(45)\n⑥Y中性點：X4(304)↔X4(308)↔X4(312)串接 → 行1\n⑦X1(301)→行2  X1(305)→行3  X1(309)→行4\n⑧行1 → (48)",
+     tr:3,sg:false,rows:["行1：被接地中性線 N","行2：燈力 A","行3：燈力 B","行4：燈力 C"]}
+};
+
+function NN(id,lbl,x,y,type,row=""){return{id,lbl,x,y,type,row,r:7};}
+
+// ═══════════════════════════════════════════════════════
+//  initLayout
+//
+//  考場真實佈局（參考訓練中心圖）：
+//  ┌──────────────────── 電桿（x=490） ─────────────────┐
+//  │  左側（電源進線側）          │   右側（終端/單組）  │
+//  │  A組：LA_A + CO_A            │   C組：LA_C + CO_C   │
+//  │  B組：LA_B + CO_B            │   （單套管改用A/C）   │
+//  └──────────────────────────────────────────────────┘
+//
+//  每組：LA(上)在 y=148，CO(上端)在 y=148，CO(下端)在 y=185
+//  LA 和 CO 左右緊鄰，LA在左，CO在右，兩者 x 距離約 40px
+//
+//  幹線 A/B/C 活線夾（接線環）：
+//    各組活線夾 x 位置與其 LA/CO 對齊
+//    A/B/C 三相 y 高度交錯（A=50, B=68, C=86），水平上不垂直對齊
+//
+//  x 座標規劃（左側兩組，右側一組）：
+//    A組：LA_A=180, CO_A=220  活線夾_A 在 A幹線上 x=200
+//    B組：LA_B=320, CO_B=360  活線夾_B 在 B幹線上 x=340
+//    C組（右側）：LA_C=720, CO_C=760  活線夾_C 在 C幹線上 x=740
+//    （單套管 Q4/Q5 使用 A/C 組，不使用 B 組）
+// ═══════════════════════════════════════════════════════
+function initLayout(q){
+  nodes=[]; conns=[]; presets=[];
+  selN=null; selC=null;
+  errN=new Set(); errC=new Set(); hintConns=[];
+  if(RES) RES.style.display="none";
+  if(DH) DH.classList.remove("show");
+
+  const sp=SP[q];
+  const is3=(sp.tr===3);
+  const isSG=sp.sg;
+
+  // ─────────────────────────────────────────────
+  //  組別定義：每組包含 {相, LA_x, CO_x, 幹線x, 幹線y}
+  //  左側兩組（A/B），右側一組（C，單套管無）
+  // ─────────────────────────────────────────────
+  //  幹線 y：A=50, B=68, C=86（水平錯開，不垂直對齊）
+  const groups = isSG
+    ? [ {ph:"A", lax:170, cox:228, hvx:197, hvy:45, hvId:1, laHvId:10, laGId:13, coTopId:104, coBotId:107},
+        {ph:"C", lax:615, cox:673, hvx:644, hvy:79, hvId:3, laHvId:12, laGId:15, coTopId:106, coBotId:109} ]
+    : [ {ph:"A", lax:170, cox:228, hvx:197, hvy:45, hvId:1, laHvId:10, laGId:13, coTopId:104, coBotId:107},
+        {ph:"B", lax:310, cox:368, hvx:337, hvy:62, hvId:2, laHvId:11, laGId:14, coTopId:105, coBotId:108},
+        {ph:"C", lax:615, cox:673, hvx:644, hvy:79, hvId:3, laHvId:12, laGId:15, coTopId:106, coBotId:109} ];
+
+  groups.forEach((g)=>{
+    nodes.push(NN(g.hvId,  `${g.ph}幹活線夾`, g.hvx, g.hvy, "hv_line"));
+    nodes.push(NN(g.laHvId, `LA_${g.ph}↑`, g.lax, 128, "la_hv"));
+    nodes.push(NN(g.laGId,  `LA_${g.ph}↓`, g.lax, 160, "la_gnd"));
+    nodes.push(NN(g.coTopId,`CO_${g.ph}↑`, g.cox, 140, "co_top"));
+    nodes.push(NN(g.coBotId,`CO_${g.ph}↓`, g.cox, 175, "co_bot"));
+  });
+
+  // 桿身三管口（y座標重新規劃，確保與相鄰節點間距足夠）
+  nodes.push(NN(99,"(99)LA接地口",490,200,"gnd_pipe")); // CO_A↓(175)下方25px
+  nodes.push(NN(45,"(45)外殼接地口",490,368,"gnd_box")); // 外殼G(318)下方50px
+  nodes.push(NN(48,"(48)系統接地口",490,505,"gnd_sys")); // X端子(435)下方70px
+
+  // TR 一次側 H 端子
+  // 兩台：TR1中心 x=310, TR2中心 x=660
+  // 三台：TR1 x=150, TR2 x=490, TR3 x=820
+  if(!is3){
+    if(isSG){
+      nodes.push(NN(201,"TR1_H1", 280,262,"tr_hv"));
+      nodes.push(NN(203,"TR1外殼G",315,318,"tr_g"));
+      nodes.push(NN(204,"TR2_H1", 630,262,"tr_hv"));
+      nodes.push(NN(206,"TR2外殼G",665,318,"tr_g"));
+    } else {
+      nodes.push(NN(201,"TR1_H1", 280,262,"tr_hv"));
+      nodes.push(NN(202,"TR1_H2", 340,262,"tr_hv"));
+      nodes.push(NN(203,"TR1外殼G",310,318,"tr_g"));
+      nodes.push(NN(204,"TR2_H1", 630,262,"tr_hv"));
+      nodes.push(NN(205,"TR2_H2", 690,262,"tr_hv"));
+      nodes.push(NN(206,"TR2外殼G",660,318,"tr_g"));
+    }
+  } else {
+    // 三台：均勻分布在 980px 畫布內
+    // TR1 中心 x=150, TR2 中心 x=490, TR3 中心 x=820
+    nodes.push(NN(201,"TR1_H1", 125,262,"tr_hv"));
+    nodes.push(NN(202,"TR1_H2", 185,262,"tr_hv"));
+    nodes.push(NN(203,"TR1外殼G",155,318,"tr_g"));
+    nodes.push(NN(204,"TR2_H1", 462,262,"tr_hv"));
+    nodes.push(NN(205,"TR2_H2", 522,262,"tr_hv"));
+    nodes.push(NN(206,"TR2外殼G",492,318,"tr_g"));
+    nodes.push(NN(207,"TR3_H1", 790,262,"tr_hv"));
+    nodes.push(NN(208,"TR3_H2", 850,262,"tr_hv"));
+    nodes.push(NN(209,"TR3外殼G",820,318,"tr_g"));
+  }
+
+  // TR 二次側 X1~X4（標籤只顯示 X1~X4，不帶 TR 前綴）
+  if(!is3){
+    [301,302,303,304].forEach((id,i)=>nodes.push(NN(id,`X${i+1}`,258+i*34,435,"tr_lv")));
+    [305,306,307,308].forEach((id,i)=>nodes.push(NN(id,`X${i+1}`,598+i*34,435,"tr_lv")));
+  } else {
+    [301,302,303,304].forEach((id,i)=>nodes.push(NN(id,`X${i+1}`, 59+i*30,435,"tr_lv")));
+    [305,306,307,308].forEach((id,i)=>nodes.push(NN(id,`X${i+1}`,389+i*30,435,"tr_lv")));
+    [309,310,311,312].forEach((id,i)=>nodes.push(NN(id,`X${i+1}`,719+i*30,435,"tr_lv")));
+  }
+
+  // 低壓幹線 C型環壓接點（每行5個）
+  const lx=[85,252,419,636,803], ly=[565,602,639,676];
+  const rn=["row1","row2","row3","row4"];
+  const bi=[401,411,421,431];
+  for(let r=0;r<4;r++)
+    for(let c=0;c<5;c++)
+      nodes.push(NN(bi[r]+c,`${["N","A","B","C"][r]}_${c+1}`,lx[c],ly[r],"lv_grid",rn[r]));
+
+  // ─ presets：只保留 X2-X3 銅片內短（永遠顯示，不可刪）
+  // 考場實際配妥的線：
+  //   Q3/Q6：高壓Δ跳線（三台TR肚上）
+  //   全部：X2-X3 銅片內短
+  // 其餘全部由考生自己接，preset不放
+  const f=id=>nodes.find(n=>n.id===id);
+  presets.push({n1:f(302),n2:f(303),g:99,copper:true});
+  presets.push({n1:f(306),n2:f(307),g:99,copper:true});
+  if(is3) presets.push({n1:f(310),n2:f(311),g:99,copper:true});
+
+  // ─ 考場配妥虛線（showP 控制，只有 Q3/Q6 的Δ跳線）
+  // Q1/Q2/Q4/Q5 沒有考場配妥線，「顯示考場配妥」對這些題無效
+  if(q===3||q===6){
+    presets.push({n1:f(202),n2:f(204),g:22,p:true}); // TR1_H2→TR2_H1
+    presets.push({n1:f(205),n2:f(207),g:22,p:true}); // TR2_H2→TR3_H1
+    presets.push({n1:f(208),n2:f(201),g:22,p:true}); // TR3_H2→TR1_H1（閉合）
+  }
+}
+
+// ═══════════════════ 繪圖 ═══════════════════
+function draw(){
+  if(!ctx) return;
+  ctx.clearRect(0,0,980,860);
+  const sp=SP[CQ];
+  const isSG=sp.sg;
+
+  // 電桿桿身
+  ctx.lineWidth=18; ctx.strokeStyle="#1e2230"; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(490,110); ctx.lineTo(490,790); ctx.stroke();
+  ctx.lineWidth=10; ctx.strokeStyle="#262c3a";
+  ctx.beginPath(); ctx.moveTo(490,110); ctx.lineTo(490,790); ctx.stroke();
+
+  // 橫擔
+  ctx.lineWidth=9; ctx.strokeStyle="#2a3040"; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(80,155); ctx.lineTo(900,155); ctx.stroke();
+  ctx.lineWidth=5; ctx.strokeStyle="#363d50";
+  ctx.beginPath(); ctx.moveTo(80,155); ctx.lineTo(900,155); ctx.stroke();
+
+  // ── 三相高壓架空幹線（A/B/C 永遠三條，不論題目）
+  const hvC=["#cc3333","#7788aa","#445566"];
+  const hvL=["A","B","C"];
+  const hvY=[45,62,79];
+  for(let i=0;i<3;i++){
+    ctx.beginPath(); ctx.moveTo(50,hvY[i]); ctx.lineTo(920,hvY[i]);
+    ctx.strokeStyle=hvC[i]; ctx.lineWidth=3.5; ctx.setLineDash([]); ctx.stroke();
+    ctx.fillStyle=hvC[i]; ctx.font="bold 14px 'Microsoft JhengHei',Arial";
+    ctx.fillText(hvL[i],928,hvY[i]+5);
+  }
+
+  // ── LA/CO 器材方框（只有該題有器材的相才畫方框）
+  const grpDraw=isSG
+    ?[{ph:"A",lax:170,cox:228,hvx:197,hvy:45,c:hvC[0]},
+      {ph:"C",lax:615,cox:673,hvx:644,hvy:79,c:hvC[2]}]
+    :[{ph:"A",lax:170,cox:228,hvx:197,hvy:45,c:hvC[0]},
+      {ph:"B",lax:310,cox:368,hvx:337,hvy:62,c:hvC[1]},
+      {ph:"C",lax:615,cox:673,hvx:644,hvy:79,c:hvC[2]}];
+
+  grpDraw.forEach(g=>{
+    ctx.setLineDash([3,3]); ctx.strokeStyle=g.c+"66"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(g.hvx,g.hvy+7); ctx.lineTo(g.hvx,118); ctx.stroke();
+    ctx.setLineDash([]);
+    // LA 方框（y=118~168）— 相別字母在左上角
+    ctx.strokeStyle=g.c+"aa"; ctx.lineWidth=1;
+    ctx.strokeRect(g.lax-13,118,28,50); ctx.fillStyle=g.c+"22"; ctx.fillRect(g.lax-13,118,28,50);
+    ctx.fillStyle=g.c; ctx.font="bold 9px Arial"; ctx.textAlign="left";
+    ctx.fillText("LA",g.lax-11,113);
+    ctx.fillStyle="#ffffff88"; ctx.font="bold 11px Arial"; ctx.textAlign="center";
+    ctx.fillText(g.ph,g.lax,132);
+    // CO 方框（y=130~185）— 相別字母在右，與LA錯開
+    ctx.strokeStyle=g.c+"aa"; ctx.lineWidth=1;
+    ctx.strokeRect(g.cox-13,130,28,52); ctx.fillStyle=g.c+"22"; ctx.fillRect(g.cox-13,130,28,52);
+    ctx.fillStyle=g.c; ctx.font="bold 9px Arial"; ctx.textAlign="left";
+    ctx.fillText("CO",g.cox-11,125);
+    ctx.fillStyle="#ffffff88"; ctx.font="bold 11px Arial"; ctx.textAlign="center";
+    ctx.fillText(g.ph,g.cox,144);
+    ctx.textAlign="left"; ctx.setLineDash([]);
+  });
+
+  // Q4/Q5：單套管題直接使用 A/C 兩組 LA/CO，不另外畫 B 組器材。
+
+  // ── 低壓幹線橫線（y更新）
+  const lvY=[565,602,639,676];
+  const lvC=["#1a3a28","#2a2510","#2a2510","#22182a"];
+  const lvLC=["#3dc97a","#e67e22","#e67e22","#a569bd"];
+  lvY.forEach((y,i)=>{
+    ctx.beginPath(); ctx.moveTo(70,y); ctx.lineTo(880,y);
+    ctx.strokeStyle=lvC[i]; ctx.lineWidth=7; ctx.setLineDash([]); ctx.stroke();
+    ctx.fillStyle=lvLC[i]; ctx.font="bold 11px 'Microsoft JhengHei',Arial";
+    ctx.fillText(`【${sp.rows[i]}】`,888,y+4);
+  });
+
+  // ── 桿身管口入地符號（更新 y）
+  [[490,202],[490,370],[490,507]].forEach(([x,y])=>gndSym(x,y));
+
+  // ── 既設線
+  presets.forEach(c=>{
+    if(!c.n1||!c.n2) return;
+    if(c.copper){
+      drawWire(c.n1,c.n2,"#b87333",5,[]);
+    } else if(c.p&&showP){
+      drawWire(c.n1,c.n2,"#556677",2,[6,4]);
+    }
+    ctx.setLineDash([]);
+  });
+
+  // ── 考生連線（加端點小圓圈，方便辨識接在哪個點）
+  conns.forEach(c=>{
+    if(!c.n1||!c.n2) return;
+    const isSel=(c===selC);
+    const isErr=errC.has(c);
+    const col=isErr?"#e74c3c":wCol(c.n1,c.n2);
+    const lw=c.g===14?2:3.5;
+    drawWire(c.n1,c.n2,isSel?"#cc55ff":col,lw,[]);
+    // 端點小圓圈（白色，讓考生清楚看到線接在哪個節點）
+    [c.n1,c.n2].forEach(nd=>{
+      ctx.beginPath(); ctx.arc(nd.x,nd.y,4,0,2*Math.PI);
+      ctx.fillStyle=isSel?"#cc55ff":col; ctx.fill();
+      ctx.strokeStyle="#0d0d0d"; ctx.lineWidth=1; ctx.stroke();
+    });
+    if(isSel){
+      const m=bzMid(c.n1,c.n2);
+      ctx.beginPath(); ctx.arc(m.x,m.y,13,0,2*Math.PI);
+      ctx.fillStyle="#7d3c98"; ctx.fill();
+      ctx.strokeStyle="#fff"; ctx.lineWidth=2.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(m.x-5,m.y-5); ctx.lineTo(m.x+5,m.y+5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(m.x+5,m.y-5); ctx.lineTo(m.x-5,m.y+5); ctx.stroke();
+    }
+  });
+
+  // ── 審查提示線（白色虛線 + ? 標示，應接但未接的位置）
+  hintConns.forEach(h=>{
+    if(!h.n1||!h.n2) return;
+    drawWire(h.n1,h.n2,"#ffffff",1.5,[8,5]);
+    const m=bzMid(h.n1,h.n2);
+    ctx.beginPath(); ctx.arc(m.x,m.y,9,0,2*Math.PI);
+    ctx.strokeStyle="#ffffff"; ctx.lineWidth=1.5; ctx.setLineDash([]);
+    ctx.fillStyle="#333"; ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#fff"; ctx.font="bold 11px Arial";
+    ctx.textAlign="center"; ctx.fillText("?",m.x,m.y+4); ctx.textAlign="left";
+  });
+
+  // ── 缺失節點：亮黃色虛線圓框（與考生連線顏色完全不同）
+  errN.forEach(id=>{
+    const nd=nodes.find(n=>n.id===id); if(!nd) return;
+    ctx.beginPath(); ctx.arc(nd.x,nd.y,nd.r+7,0,2*Math.PI);
+    ctx.strokeStyle="#f1c40f"; ctx.lineWidth=2.5;
+    ctx.setLineDash([5,3]); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ── 節點
+  nodes.forEach(nd=>{
+    if(!nd) return;
+    const isSel=selN&&selN.id===nd.id;
+    const isErr=errN.has(nd.id);
+    ctx.beginPath(); ctx.arc(nd.x,nd.y,nd.r,0,2*Math.PI);
+    ctx.fillStyle=isSel?"#e74c3c":isErr?"#c0392b":nCol(nd);
+    ctx.fill(); ctx.strokeStyle="#0d0d0d"; ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.stroke();
+    drawLabel(nd);
+  });
+}
+
+function gndSym(x,y){
+  ctx.setLineDash([3,3]); ctx.strokeStyle="#2ecc7155"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+12); ctx.stroke();
+  ctx.setLineDash([]);
+  [[22,0],[16,5],[10,10]].forEach(([w,dy])=>{
+    ctx.beginPath(); ctx.moveTo(x-w/2,y+12+dy); ctx.lineTo(x+w/2,y+12+dy);
+    ctx.strokeStyle="#2ecc7166"; ctx.lineWidth=1.5; ctx.stroke();
+  });
+}
+
+function drawLabel(nd){
+  ctx.setLineDash([]);
+  const t=nd.type;
+  if(t==="lv_grid"){
+    ctx.fillStyle="#888"; ctx.font="9px Arial";
+    ctx.textAlign="center"; ctx.fillText(`(${nd.id})`,nd.x,nd.y-11); ctx.textAlign="left";
+    return;
+  }
+  if(t==="tr_lv"){
+    ctx.fillStyle="#ffcc88"; ctx.font="bold 10px 'Microsoft JhengHei',Arial";
+    ctx.textAlign="center"; ctx.fillText(nd.lbl,nd.x,nd.y-12); ctx.textAlign="left";
+    return;
+  }
+  ctx.font="10px 'Microsoft JhengHei',Arial";
+  if(t==="gnd_pipe"||t==="gnd_box"||t==="gnd_sys"){
+    ctx.fillStyle="#3dc97a"; ctx.fillText(nd.lbl,nd.x+12,nd.y+4); return;
+  }
+  if(t==="hv_line"){
+    ctx.fillStyle="#aabbcc"; ctx.textAlign="center"; ctx.fillText(nd.lbl,nd.x,nd.y-11); ctx.textAlign="left"; return;
+  }
+  if(t==="la_hv"||t==="la_gnd"){
+    // 只顯示「高」或「地」，避免與 CO 的標籤重疊
+    ctx.fillStyle=t==="la_gnd"?"#2ecc71":"#f0c040";
+    ctx.font="bold 9px Arial"; ctx.textAlign="center";
+    ctx.fillText(t==="la_hv"?"高":"地", nd.x, nd.y+(t==="la_hv"?-11:13));
+    ctx.textAlign="left"; return;
+  }
+  if(t==="co_top"||t==="co_bot"){
+    // 只顯示「源」或「載」，避免與 LA 的標籤重疊
+    ctx.fillStyle="#c49a20"; ctx.font="bold 9px Arial"; ctx.textAlign="center";
+    ctx.fillText(t==="co_top"?"源":"載", nd.x, nd.y+(t==="co_top"?-11:13));
+    ctx.textAlign="left"; return;
+  }
+  if(t==="tr_hv"){
+    ctx.fillStyle="#e8c060"; ctx.textAlign="center"; ctx.fillText(nd.lbl,nd.x,nd.y-11); ctx.textAlign="left"; return;
+  }
+  if(t==="tr_g"){
+    ctx.fillStyle="#2ecc71"; ctx.textAlign="center"; ctx.fillText(nd.lbl,nd.x,nd.y+14); ctx.textAlign="left"; return;
+  }
+  ctx.fillStyle="#c8ced8"; ctx.fillText(nd.lbl,nd.x+9,nd.y+4);
+}
+
+function bzCtrl(a,b){
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const dist=Math.hypot(dx,dy);
+  // 固定往「上方+側邊」彎弧，不論起終點誰左誰右
+  // 距離越遠弧度越大，避免長線太平
+  const curve=Math.min(dist*0.25, 80);
+  // 水平線（X端子到低壓幹線）：往外大弧繞，避免貼幹線
+  const isVertical=(Math.abs(dy)>Math.abs(dx)*0.5);
+  const offset=isVertical?curve*1.4:curve;
+  return{
+    cx:(a.x+b.x)/2 - offset * Math.sign(dy||1) * 0.3,
+    cy:(a.y+b.y)/2 - offset
+  };
+}
+function bzMid(a,b){
+  const{cx,cy}=bzCtrl(a,b);
+  return{x:.25*a.x+.5*cx+.25*b.x,y:.25*a.y+.5*cy+.25*b.y};
+}
+function bezPt(a,b,t){
+  const{cx,cy}=bzCtrl(a,b);
+  return{x:(1-t)**2*a.x+2*(1-t)*t*cx+t**2*b.x,
+         y:(1-t)**2*a.y+2*(1-t)*t*cy+t**2*b.y};
+}
+function distToBez(a,b,mx,my){
+  let d=Infinity;
+  for(let t=.05;t<=.95;t+=.05){const p=bezPt(a,b,t);d=Math.min(d,Math.hypot(mx-p.x,my-p.y));}
+  return d;
+}
+function drawWire(a,b,col,lw,dash){
+  // 線段避開接點圓圈：不要從圓心畫到圓心，避免線蓋住端子點。
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const d=Math.hypot(dx,dy)||1;
+  const offA=(a.r||7)+3, offB=(b.r||7)+3;
+  const aa={...a, x:a.x+dx/d*offA, y:a.y+dy/d*offA};
+  const bb={...b, x:b.x-dx/d*offB, y:b.y-dy/d*offB};
+  const{cx,cy}=bzCtrl(aa,bb);
+  ctx.beginPath(); ctx.moveTo(aa.x,aa.y);
+  ctx.quadraticCurveTo(cx,cy,bb.x,bb.y);
+  ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash); ctx.stroke();
+  ctx.setLineDash([]);
+}
+function wCol(a,b){
+  const gT=["gnd_pipe","gnd_box","gnd_sys","la_gnd","tr_g"];
+  if(gT.includes(a.type)||gT.includes(b.type)) return "#2ecc71";
+  if(a.type==="lv_grid"||b.type==="lv_grid"||a.type==="tr_lv"||b.type==="tr_lv") return "#e67e22";
+  if(a.type==="la_hv"||b.type==="la_hv") return "#5dade2";
+  return "#f1c40f";
+}
+function nCol(nd){
+  const t=nd.type;
+  if(t==="hv_line") return "#4a9edd";
+  if(t==="co_top") return "#f0c040";
+  if(t==="co_bot") return "#c49a20";
+  if(t==="la_hv") return "#f0c040";
+  if(t==="la_gnd") return "#2ecc71";
+  if(t==="gnd_pipe"||t==="gnd_box"||t==="gnd_sys") return "#2ecc71";
+  if(t==="tr_hv") return "#e8c060";
+  if(t==="tr_g") return "#2ecc71";
+  if(t==="tr_lv") return "#e67e22";
+  if(t==="lv_grid") return "#e67e22";
+  return "#aaaaaa";
+}
+
+// ═══════════════════ 滑鼠 ═══════════════════
+// 邏輯：
+//   單擊節點 → 建立連線
+//   單擊連線 → 第一次高亮選取
+//   再次單擊同一條連線 → 第二次直接刪除（連點兩次刪線）
+//   單擊空白 → 取消選取
+function onMD(e){
+  const r=canvas.getBoundingClientRect();
+  // 修正縮放比例：canvas 實際繪圖尺寸 vs CSS 顯示尺寸
+  const scaleX=canvas.width/r.width;
+  const scaleY=canvas.height/r.height;
+  const mx=(e.clientX-r.left)*scaleX;
+  const my=(e.clientY-r.top)*scaleY;
+
+  // 點節點優先
+  for(const nd of nodes){
+    if(Math.hypot(mx-nd.x,my-nd.y)<=nd.r+8){
+      if(!selN){
+        selN=nd; selC=null;
+        DH&&DH.classList.remove("show");
+      } else if(selN.id!==nd.id){
+        // 考場配妥線只是提示，不可阻擋學生練習同一條線；只檢查學生已畫線是否重複。
+        const dup=conns.some(c=>
+          (c.n1.id===selN.id&&c.n2.id===nd.id)||(c.n1.id===nd.id&&c.n2.id===selN.id));
+        if(!dup){conns.push({n1:selN,n2:nd,g:CG});errN=new Set();errC=new Set();}
+        selN=null;
+      } else {
+        selN=null;
+      }
+      draw(); return;
+    }
+  }
+
+  // 點連線
+  for(const c of conns){
+    if(distToBez(c.n1,c.n2,mx,my)<=12){
+      if(selC===c){
+        // 第二次點同一條線 → 直接刪除
+        delConn(c); return;
+      } else {
+        // 第一次點 → 高亮選取
+        selC=c; selN=null;
+        DH&&DH.classList.add("show");
+        draw(); return;
+      }
+    }
+  }
+
+  // 點空白 → 取消
+  selN=null; selC=null;
+  DH&&DH.classList.remove("show");
+  draw();
+}
+function delConn(c){
+  const i=conns.indexOf(c);
+  if(i>=0){conns.splice(i,1);errN=new Set();errC=new Set();}
+  selC=null;
+  DH&&DH.classList.remove("show");
+  draw();
+}
+function delSel(){
+  if(selC) delConn(selC);
+}
+function onKD(e){
+  if((e.key==="Delete"||e.key==="Backspace")&&selC){e.preventDefault();delSel();}
+  if(e.key==="Escape"){selN=null;selC=null;DH&&DH.classList.remove("show");draw();}
+}
+
+// ═══════════════════ 控制 ═══════════════════
+function switchQuiz(q){
+  CQ=q;
+  for(let i=1;i<=6;i++) document.getElementById(`qb${i}`).classList.toggle("active",i===q);
+  document.getElementById("qtitle").innerText=SP[q].title;
+  document.getElementById("qguide").innerText=SP[q].guide;
+  showP=false;
+  const pb=document.getElementById("pbtn");
+  pb.classList.remove("on"); pb.innerText="顯示考場配妥";
+  initLayout(q); draw();
+}
+function togglePreset(){
+  showP=!showP;
+  const pb=document.getElementById("pbtn");
+  pb.classList.toggle("on",showP);
+  pb.innerText=showP?"隱藏考場配妥":"顯示考場配妥";
+  draw();
+}
+function clearWires(){
+  initLayout(CQ);showP=false;
+  const pb=document.getElementById("pbtn");
+  pb.classList.remove("on"); pb.innerText="顯示考場配妥";
+  DH&&DH.classList.remove("show"); draw();
+}
+function enterQuiz(){clearWires();}
+
+// ═══════════════════ 標準答案 ═══════════════════
+function showAnswer(){
+  initLayout(CQ);
+  const f=id=>nodes.find(n=>n.id===id);
+  const add=(a,b,g=22)=>{const n1=f(a),n2=f(b);if(n1&&n2)conns.push({n1,n2,g});};
+  const sp=SP[CQ];
+
+  // ① 幹線活線夾 → CO電源側上端
+  add(1,104); add(2,105);
+  if(!sp.sg) add(3,106);
+
+  // ② CO電源側 → LA高壓端（14mm²）
+  add(104,10,14); add(105,11,14);
+  if(!sp.sg) add(106,12,14);
+
+  // ③ LA接地端串接 → 管口99（14mm²）
+  add(13,14,14);
+  if(!sp.sg){add(14,15,14);add(15,99,14);}
+  else add(14,99,14);
+
+  // ④ CO負載側 → TR一次側（所有題目考生都要接）
+  if(CQ===1||CQ===2){
+    // V-V：CO_A下→TR1_H1, CO_B下→TR1_H2, CO_B下→TR2_H1, CO_C下→TR2_H2
+    add(107,201); add(108,202); add(108,204); add(109,205);
+  } else if(CQ===3||CQ===6){
+    // Δ：CO下端→各台H1主端子
+    add(107,201); add(108,204); add(109,207);
+  } else if(CQ===4||CQ===5){
+    // 單套管：CO_A下→TR1_H1, CO_C下→TR2_H1
+    add(107,201); add(109,204);
+    // 開Y中性點：外殼G互接→管口45
+    add(203,206);
+  }
+
+  // ⑤ 外殼G串接後引至管口(45)
+  if(sp.tr===3){
+    // 三台串接：TR1G→TR2G→TR3G→(45)
+    add(203,206); add(206,209); add(209,45);
+  } else if(CQ===4||CQ===5){
+    // 單套管：④步驟已接203↔206，這裡只需再接 206→(45)
+    add(206,45);
+  } else {
+    // 兩台雙套管：TR1G→TR2G串接，TR2G→(45)
+    add(203,206); add(206,45);
+  }
+
+  // ⑥ 低壓側
+  if(CQ===1){
+    add(304,305); add(304,401); add(301,411); add(308,421); add(401,48);
+  } else if(CQ===2){
+    add(302,401); add(301,411); add(305,421); add(308,431); add(401,48);
+  } else if(CQ===3){
+    // Δ閉合：TR1_X4(304)↔TR2_X1(305)、TR2_X4(308)↔TR3_X1(309)、TR3_X4(312)↔TR1_X1(301)
+    add(304,305); add(308,309); add(312,301);
+    // 接地頂點（TR1_X1↔TR3_X4短接處）→ 行1
+    add(301,401);
+    // A相出力（TR1_X4↔TR2_X1連接點）→ 行2
+    add(305,411);
+    // B相出力（TR2_X4↔TR3_X1連接點）→ 行3
+    add(309,421);
+    add(401,48);
+  } else if(CQ===4){
+    add(302,401); add(301,411); add(305,421); add(308,431); add(401,48);
+  } else if(CQ===5){
+    add(304,305); add(304,401); add(301,411); add(308,421); add(401,48);
+  } else if(CQ===6){
+    add(304,308); add(308,312); add(312,401);
+    add(301,411); add(305,421); add(309,431); add(401,48);
+  }
+  draw();
+}
+
+// ═══════════════════ 配線審查 ═══════════════════
+function checkWiring(){
+  try{
+    errN=new Set(); errC=new Set(); hintConns=[];
+    const f=id=>nodes.find(n=>n.id===id);
+
+    const adj={};
+    nodes.forEach(n=>adj[n.id]=new Set());
+    // 只有考生連線 + X2-X3銅片內短（copper:true）納入審查。
+    // p:true 的考場配妥線只是參考提示，不納入審查，考生仍須自己練習檢查/修復。
+    const auditConns=[...conns, ...presets.filter(c=>c.copper)];
+    auditConns.forEach(c=>{
+      if(!c||!c.n1||!c.n2)return;
+      adj[c.n1.id].add(c.n2.id); adj[c.n2.id].add(c.n1.id);
+    });
+    function cn(a,b){
+      const v=new Set(),q=[a];
+      while(q.length){const c=q.shift();if(c===b)return true;if(v.has(c))continue;v.add(c);(adj[c]||new Set()).forEach(n=>{if(!v.has(n))q.push(n);});}
+      return false;
+    }
+    function cnR(id,row){return nodes.filter(n=>n.row===row).some(n=>cn(id,n.id));}
+    function anyCnR(ids,row){return ids.some(id=>cnR(id,row));}
+    function mark(...ids){ids.forEach(id=>errN.add(id));}
+    // 提示連線：兩節點間應有連線但實際沒有
+    function hint(a,b){
+      const n1=f(a),n2=f(b);
+      if(n1&&n2&&!cn(a,b)) hintConns.push({n1,n2});
+    }
+
+    const sp=SP[CQ];const is3=sp.tr===3;
+    const err=[],wrn=[];
+
+    // 1. 幹線→CO電源側
+    if(sp.sg){
+      if(!cn(1,104)||!cn(3,106)){
+        err.push("❌【重大缺失六】單套管題幹線A/C相未引入CO電源側！");mark(1,3,104,106);
+        hint(1,104);hint(3,106);
+      }
+    } else {
+      if(!cn(1,104)||!cn(2,105)){
+        err.push("❌【重大缺失六】幹線A/B相未引入CO電源側！");mark(1,2,104,105);
+        hint(1,104);hint(2,105);
+      }
+      if(!cn(3,106)){
+        err.push("❌【重大缺失六】幹線C相未引入CO_C電源側！");mark(3,106);hint(3,106);
+      }
+    }
+
+    // 2. LA從CO電源側分接
+    if(sp.sg){
+      if(!cn(104,10)||!cn(106,12)){
+        err.push("❌【重大缺失六】單套管題LA_A/LA_C高壓端必須由CO電源側平行分接！");mark(104,106,10,12);
+        hint(104,10);hint(106,12);
+      }
+    } else {
+      if(!cn(104,10)||!cn(105,11)){
+        err.push("❌【重大缺失六】LA高壓端必須由CO電源側平行分接！");mark(104,105,10,11);
+        hint(104,10);hint(105,11);
+      }
+      if(!cn(106,12)){
+        err.push("❌【重大缺失六】LA_C未由CO_C電源側分接！");mark(106,12);hint(106,12);
+      }
+    }
+
+    // 3. LA接地→管口99
+    // 單套管(Q4/Q5)：A/C 的 LA 接地端 13和15串接後任一引到99即可
+    // 雙套管(Q1/2/3/6)：13→14→15串接，最終任一引到99
+    const laOk=sp.sg
+      ? (cn(13,15) && (cn(13,99)||cn(15,99)))
+      : (cn(13,14) && cn(14,15) && (cn(13,99)||cn(14,99)||cn(15,99)));
+    if(!laOk){
+      err.push("❌【重大缺失八】LA接地端未串接引入管口(99)！[14mm²]");mark(13,14,15,99);
+      if(!sp.sg){hint(13,14);hint(14,15);hint(15,99);}else {hint(13,15);hint(15,99);}
+    }
+
+    // 4. Q1/Q2：CO負載側→TR H端子
+    if(CQ===1||CQ===2){
+      if(!cn(107,201)){err.push("❌【高壓缺失】CO_A負載側未引接TR1_H1(201)！");mark(107,201);hint(107,201);}
+      if(!cn(108,202)){err.push("❌【高壓缺失】CO_B負載側未引接TR1_H2(202)！");mark(108,202);hint(108,202);}
+      if(!cn(108,204)){err.push("❌【高壓缺失】CO_B負載側未引接TR2_H1(204)！");mark(108,204);hint(108,204);}
+      if(!cn(109,205)){err.push("❌【高壓缺失】CO_C負載側未引接TR2_H2(205)！");mark(109,205);hint(109,205);}
+    }
+
+    // 4b. Q3/Q6：CO負載側→TR H1
+    if((CQ===3||CQ===6)&&(!cn(107,201)||!cn(108,204)||!cn(109,207))){
+      err.push("❌【高壓缺失】CO負載側未完全引接各台TR H1端子！");mark(107,108,109,201,204,207);
+      hint(107,201);hint(108,204);hint(109,207);
+    }
+
+    // 4c. Q4/Q5：CO負載側→TR H1
+    if(CQ===4||CQ===5){
+      if(!cn(107,201)){err.push("❌【高壓缺失】CO_A負載側未引接TR1_H1(201)！");mark(107,201);hint(107,201);}
+      if(!cn(109,204)){err.push("❌【高壓缺失】CO_C負載側未引接TR2_H1(204)！");mark(109,204);hint(109,204);}
+    }
+
+    // 5. Q4/Q5：開Y中性點 — 單套管，外殼G互接
+    if((CQ===4||CQ===5)&&!cn(203,206)){
+      err.push("❌【高壓缺失】單套管開Y：TR1外殼G(203)↔TR2外殼G(206)未互接！");
+      mark(203,206);hint(203,206);
+    }
+
+    // 6. 外殼G串接後引至管口(45)
+    // 規定：各台外殼G先串接，再由最後一台引一條線到(45)
+    // 驗証：所有外殼G節點都連通到(45)即可（不管串接順序）
+    const gOk=cn(203,45)&&cn(206,45)&&(!is3||cn(209,45));
+    const gSerial=is3?(cn(203,206)&&cn(206,209)):(cn(203,206));
+    if(!gOk){
+      err.push("❌【重大缺失八】外殼G螺絲未串接後引入外箱保護接地口(45)！應先串接各台再引一條線到(45)");
+      mark(203,206,45);
+      if(!cn(203,206))hint(203,206);
+      if(!cn(206,45))hint(206,45);
+      if(is3){if(!cn(206,209))hint(206,209);if(!cn(209,45))hint(209,45);}
+    } else if(!gSerial){
+      err.push("⚠【工法缺失】外殼G各台已接到(45)，但未串接在一起！規定須先串接再引一條線到(45)");
+      mark(203,206);
+      hint(203,206);
+    }
+    if(cn(203,48)||cn(206,48)||(is3&&cn(209,48))){
+      err.push("💥【判定0分】外殼接地混接至系統接地口(48)！嚴禁混用！");mark(203,206,45,48);}
+
+    // 7. 低壓
+    if(CQ===1||CQ===5){
+      if(!cn(304,305)){err.push("❌【低壓缺失】TR1_X4↔TR2_X1未短接！");mark(304,305);hint(304,305);}
+      if(!anyCnR([304,305],"row1")){err.push("❌【低壓缺失】共用點未引至行1！");mark(304,305,401);hint(304,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至行2！");mark(301,411);hint(301,411);}
+      if(!cnR(308,"row3")){err.push("❌【低壓缺失】TR2_X4(308)未引至行3！");mark(308,421);hint(308,421);}
+    }else if(CQ===2||CQ===4){
+      if(!anyCnR([302,303],"row1")){err.push("❌【低壓缺失】工作中性點未引至行1！");mark(302,303,401);hint(302,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至行2！");mark(301,411);hint(301,411);}
+      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1(305)未引至行3！");mark(305,421);hint(305,421);}
+      if(!cnR(308,"row4")){err.push("❌【低壓缺失】TR2_X4(308)未引至行4！");mark(308,431);hint(308,431);}
+    }else if(CQ===3){
+      if(!cn(304,305)){hint(304,305);}if(!cn(308,309)){hint(308,309);}if(!cn(312,301)){hint(312,301);}
+      if(!(cn(304,305)&&cn(308,309)&&cn(312,301))){err.push("❌【低壓缺失】Δ三角形未閉合！（需：TR1_X4↔TR2_X1、TR2_X4↔TR3_X1、TR3_X4↔TR1_X1）");mark(304,305,308,309,312,301);}
+      // 接地頂點：TR1_X1(301)與TR3_X4(312)的短接處引出→行1
+      if(!anyCnR([301,312],"row1")){err.push("❌【低壓缺失】Δ接地頂點（TR1_X1↔TR3_X4短接處）未引至行1！");mark(301,312,401);hint(301,401);}
+      if(!anyCnR([304,305],"row2")){err.push("❌【低壓缺失】Δ出力未引至行2（A相）！");mark(304,305,411);hint(305,411);}
+      if(!anyCnR([308,309],"row3")){err.push("❌【低壓缺失】Δ出力未引至行3（B相）！");mark(308,309,421);hint(309,421);}
+    }else if(CQ===6){
+      if(!cn(304,308)){hint(304,308);}if(!cn(308,312)){hint(308,312);}
+      if(!(cn(304,308)&&cn(308,312))){err.push("❌【低壓缺失】Y中性點未串接！");mark(304,308,312);}
+      if(!anyCnR([304,308,312],"row1")){err.push("❌【低壓缺失】Y中性點未引至行1！");mark(401);hint(312,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1未引至行2！");mark(301,411);hint(301,411);}
+      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1未引至行3！");mark(305,421);hint(305,421);}
+      if(!cnR(309,"row4")){err.push("❌【低壓缺失】TR3_X1未引至行4！");mark(309,431);hint(309,431);}
+    }
+
+    // 8. 行1→系統接地口48
+    if(!cnR(48,"row1")){
+      err.push("❌【接地缺失】行1未引至系統被接地口(48)！");mark(48,401,402);
+      hint(401,48);
+    }
+
+    // 9. C型環重複壓接
+    const cnt={};
+    conns.forEach(c=>{[c.n1,c.n2].forEach(nd=>{if(nd.type==="lv_grid")cnt[nd.id]=(cnt[nd.id]||0)+1;});});
+    Object.entries(cnt).forEach(([id,n])=>{if(n>1){wrn.push(`⚠ 低壓接點(${id})重複壓接${n}條線！`);errN.add(Number(id));}});
+
+    // 標示錯誤連線
+    conns.forEach(c=>{if(errN.has(c.n1.id)||errN.has(c.n2.id))errC.add(c);});
+    draw();
+
+    RES.style.display="block";
+    if(err.length===0){
+      RES.className="res ok"; errN=new Set();errC=new Set();hintConns=[];
+      const wt=wrn.length?"\n\n⚠ 工法警告：\n"+wrn.join("\n"):"";
+      RES.innerHTML=`🎉【監評配線審查：合格！】\n幹線引入✓ LA分接順序✓ 避雷器接地✓\n外殼保護接地✓ 低壓結線✓ 系統接地✓\n本題配線完全正確！${wt}`;
+    }else{
+      RES.className="res er";
+      RES.innerHTML=`📋【監評配線審查：不合格】\n發現 ${err.length} 項缺失\n▪ 黃色框＝缺失節點  ▪ 白色虛線＝應接位置：\n\n${err.join("\n")}${wrn.length?"\n\n"+wrn.join("\n"):""}`;
+    }
+    draw();
+  }catch(ex){
+    RES.style.display="block";RES.className="res er";
+    RES.innerHTML="⚠ 系統錯誤："+ex.message;
+  }
+}
+
+// ═══════════════════ 初始化 ═══════════════════
+document.addEventListener("DOMContentLoaded",()=>{
+  canvas=document.getElementById("wireCanvas");
+  ctx=canvas.getContext("2d");
+  RES=document.getElementById("res");
+  DH=document.getElementById("dh");
+  canvas.addEventListener("mousedown",onMD);
+  document.addEventListener("keydown",onKD);
+  switchQuiz(1);
+});
+</script>
+</body>
+</html>
