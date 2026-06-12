@@ -31,7 +31,7 @@ function directConnsBetween(conns,a,b){
 function runModularRules({nodes,conns,presets,quizId,sp}){
   const graph=buildAuditGraph(nodes,conns,presets);
   const byId=id=>nodes.find(n=>n.id===id);
-  const result={errors:[],warnings:[],marks:new Set(),hints:[]};
+  const result={errors:[],warnings:[],marks:new Set(),hints:[],connMarks:[]};
   const mark=(...ids)=>ids.forEach(id=>result.marks.add(id));
   const hint=(a,b)=>{
     const n1=byId(a), n2=byId(b);
@@ -45,11 +45,12 @@ function runModularRules({nodes,conns,presets,quizId,sp}){
 
   getStandardWires(quizId).forEach(w=>{
     if(w.toRow){
+      const rowName=typeof rowDisplayName==="function"?rowDisplayName(w.toRow):w.toRow;
       const targets=nodes.filter(n=>n.row===w.toRow);
       const ok=targets.some(n=>graph.connected(w.from,n.id));
       if(!ok){
         addError(
-          `❌【標準答案缺線】${w.from} 未接到 ${w.toRow} 任一合理接點！`,
+          `❌【標準答案缺線】${w.from} 未接到${rowName}任一合理接點！`,
           [w.from,...targets.map(n=>n.id)],
           targets[0]?[[w.from,targets[0].id]]:[]
         );
@@ -95,13 +96,32 @@ function runModularRules({nodes,conns,presets,quizId,sp}){
   });
 
   // Gauge rule for direct wires: LA leads must be 14mm², other standard direct wires default to 22mm².
-  getStandardWires(quizId).filter(w=>!w.toRow).forEach(w=>{
+  getStandardWires(quizId).forEach(w=>{
+    if(w.toRow){
+      const rowName=typeof rowDisplayName==="function"?rowDisplayName(w.toRow):w.toRow;
+      const expected=w.g||22;
+      conns.forEach(c=>{
+        const aIsRow=c.n1.type==="lv_grid"&&c.n1.row===w.toRow;
+        const bIsRow=c.n2.type==="lv_grid"&&c.n2.row===w.toRow;
+        if(!aIsRow&&!bIsRow) return;
+        const other=aIsRow?c.n2:c.n1;
+        if(graph.connected(w.from,other.id)&&c.g!==expected){
+          result.connMarks.push(c);
+          addError(
+            `❌【線徑錯誤】${w.from} → ${rowName} 應使用 ${expected}mm²，現在是 ${c.g}mm²！`,
+            []
+          );
+        }
+      });
+      return;
+    }
     directConnsBetween(conns,w.from,w.to).forEach(c=>{
       const expected=w.g||22;
       if(c.g!==expected){
+        result.connMarks.push(c);
         addError(
           `❌【線徑錯誤】${w.from} ↔ ${w.to} 應使用 ${expected}mm²，現在是 ${c.g}mm²！`,
-          [w.from,w.to]
+          []
         );
       }
     });

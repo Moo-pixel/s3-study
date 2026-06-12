@@ -56,19 +56,20 @@ function lowVoltageWires(q){
   if(q===1){
     return [
       {from:304,to:305},
-      {from:304,to:403},
-      {from:301,to:411},
-      {from:308,to:429},
-      {from:48,to:405}
+      {from:304,toRow:"row1"},
+      {from:301,toRow:"row2"},
+      {from:308,toRow:"row3"},
+      {from:48,toRow:"row1"}
     ];
   }
   if(q===2){
     return [
-      {from:303,to:403},
-      {from:301,to:411},
-      {from:305,to:427},
-      {from:308,to:439},
-      {from:48,to:405}
+      {from:304,to:305},
+      {from:303,toRow:"row1"},
+      {from:301,toRow:"row2"},
+      {from:305,toRow:"row3"},
+      {from:308,toRow:"row4"},
+      {from:48,toRow:"row1"}
     ];
   }
   if(q===3){
@@ -76,39 +77,39 @@ function lowVoltageWires(q){
       {from:304,to:305},
       {from:308,to:309},
       {from:312,to:301},
-      {from:301,to:401},
-      {from:305,to:414},
-      {from:309,to:427},
-      {from:48,to:405}
+      {from:301,toRow:"row1"},
+      {from:305,toRow:"row2"},
+      {from:309,toRow:"row3"},
+      {from:48,toRow:"row1"}
     ];
   }
   if(q===4){
     return [
       {from:304,to:305},
-      {from:303,to:403},
-      {from:301,to:411},
-      {from:305,to:427},
-      {from:308,to:439},
-      {from:48,to:405}
+      {from:303,toRow:"row1"},
+      {from:301,toRow:"row2"},
+      {from:305,toRow:"row3"},
+      {from:308,toRow:"row4"},
+      {from:48,toRow:"row1"}
     ];
   }
   if(q===5){
     return [
       {from:304,to:305},
-      {from:304,to:403},
-      {from:301,to:411},
-      {from:308,to:429},
-      {from:48,to:405}
+      {from:304,toRow:"row1"},
+      {from:301,toRow:"row2"},
+      {from:308,toRow:"row3"},
+      {from:48,toRow:"row1"}
     ];
   }
   return [
     {from:304,to:308},
     {from:308,to:312},
-    {from:312,to:409},
-    {from:301,to:411},
-    {from:305,to:424},
-    {from:309,to:437},
-    {from:48,to:404}
+    {from:312,toRow:"row1"},
+    {from:301,toRow:"row2"},
+    {from:305,toRow:"row3"},
+    {from:309,toRow:"row4"},
+    {from:48,toRow:"row1"}
   ];
 }
 

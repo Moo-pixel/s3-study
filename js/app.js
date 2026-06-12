@@ -124,7 +124,7 @@ function draw(){
     const isSel=(c===selC);
     const isErr=errC.has(c);
     const col=isErr?"#e74c3c":wCol(c.n1,c.n2);
-    const lw=c.g===14?2:3.5;
+    const lw=(c.g===14?2:3.5)+(isErr?1.8:0);
     drawWire(c.n1,c.n2,isSel?"#cc55ff":col,lw,[]);
     // 端點小圓圈（白色，讓考生清楚看到線接在哪個節點）
     [c.n1,c.n2].forEach(nd=>{
@@ -355,11 +355,6 @@ function bzMid(a,b){
 function bezPt(a,b,t){
   return bezPtWithCtrl(a,b,routedCtrl(a,b,3),t);
 }
-function distToBez(a,b,mx,my){
-  let d=Infinity;
-  for(let t=.05;t<=.95;t+=.05){const p=bezPt(a,b,t);d=Math.min(d,Math.hypot(mx-p.x,my-p.y));}
-  return d;
-}
 function drawWire(a,b,col,lw,dash){
   if((a.type==="tr_lv"&&b.type==="lv_grid")||(a.type==="lv_grid"&&b.type==="tr_lv")){
     drawLvDropWire(a,b,col,lw,dash);
@@ -498,7 +493,7 @@ function onMD(e){
 
   // 點連線
   for(const c of conns){
-    if(distToBez(c.n1,c.n2,mx,my)<=12){
+    if(distToWire(c.n1,c.n2,mx,my)<=12){
       if(selC===c){
         // 第二次點同一條線 → 直接刪除
         delConn(c); return;
@@ -574,15 +569,12 @@ function showAnswer(){
   const pickRowNode=(from,row)=>{
     const src=f(from);
     if(!src) return null;
-    const candidates=nodes
+    if(typeof pickBestLvTap==="function"){
+      return pickBestLvTap({from:src,row,nodes,usedLv,existingConns:conns});
+    }
+    return nodes
       .filter(n=>n.row===row&&!usedLv.has(n.id))
-      .map(n=>{
-        const dist=Math.abs(n.x-src.x);
-        const clear=pathClearance(src,n,3.5);
-        return {n,score:Math.min(clear,18)*12-dist*.08};
-      })
-      .sort((a,b)=>b.score-a.score);
-    return candidates[0]?.n||null;
+      .sort((a,b)=>Math.abs(a.x-src.x)-Math.abs(b.x-src.x))[0]||null;
   };
   getStandardWires(CQ).forEach(w=>{
     if(w.toRow){
@@ -633,6 +625,7 @@ function checkWiring(){
       modular.warnings.forEach(msg=>{if(!wrn.includes(msg)) wrn.push(msg);});
       modular.marks.forEach(id=>errN.add(id));
       modular.hints.forEach(h=>hintConns.push(h));
+      (modular.connMarks||[]).forEach(c=>errC.add(c));
     }
 
     // 1. 幹線→CO電源側
@@ -726,34 +719,34 @@ function checkWiring(){
     // 7. 低壓
     if(CQ===1||CQ===5){
       if(!cn(304,305)){err.push("❌【低壓缺失】TR1_X4↔TR2_X1未短接！");mark(304,305);hint(304,305);}
-      if(!anyCnR([304,305],"row1")){err.push("❌【低壓缺失】共用點未引至行1！");mark(304,305,401);hint(304,401);}
-      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至行2！");mark(301,411);hint(301,411);}
-      if(!cnR(308,"row3")){err.push("❌【低壓缺失】TR2_X4(308)未引至行3！");mark(308,421);hint(308,421);}
+      if(!anyCnR([304,305],"row1")){err.push("❌【低壓缺失】共用點未引至被接地線！");mark(304,305,401);hint(304,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至A相低壓線！");mark(301,411);hint(301,411);}
+      if(!cnR(308,"row3")){err.push("❌【低壓缺失】TR2_X4(308)未引至B相低壓線！");mark(308,421);hint(308,421);}
     }else if(CQ===2||CQ===4){
       if(CQ===4&&!cn(304,305)){err.push("❌【低壓缺失】TR1_X4↔TR2_X1未短接！");mark(304,305);hint(304,305);}
-      if(!anyCnR([302,303],"row1")){err.push("❌【低壓缺失】工作中性點未引至行1！");mark(302,303,401);hint(302,401);}
-      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至行2！");mark(301,411);hint(301,411);}
-      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1(305)未引至行3！");mark(305,421);hint(305,421);}
-      if(!cnR(308,"row4")){err.push("❌【低壓缺失】TR2_X4(308)未引至行4！");mark(308,431);hint(308,431);}
+      if(!anyCnR([302,303],"row1")){err.push("❌【低壓缺失】工作中性點未引至被接地線！");mark(302,303,401);hint(302,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1(301)未引至A相低壓線！");mark(301,411);hint(301,411);}
+      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1(305)未引至B相低壓線！");mark(305,421);hint(305,421);}
+      if(!cnR(308,"row4")){err.push("❌【低壓缺失】TR2_X4(308)未引至C相低壓線！");mark(308,431);hint(308,431);}
     }else if(CQ===3){
       if(!cn(304,305)){hint(304,305);}if(!cn(308,309)){hint(308,309);}if(!cn(312,301)){hint(312,301);}
       if(!(cn(304,305)&&cn(308,309)&&cn(312,301))){err.push("❌【低壓缺失】Δ三角形未閉合！（需：TR1_X4↔TR2_X1、TR2_X4↔TR3_X1、TR3_X4↔TR1_X1）");mark(304,305,308,309,312,301);}
       // 接地頂點：TR1_X1(301)與TR3_X4(312)的短接處引出→行1
-      if(!anyCnR([301,312],"row1")){err.push("❌【低壓缺失】Δ接地頂點（TR1_X1↔TR3_X4短接處）未引至行1！");mark(301,312,401);hint(301,401);}
-      if(!anyCnR([304,305],"row2")){err.push("❌【低壓缺失】Δ出力未引至行2（A相）！");mark(304,305,411);hint(305,411);}
-      if(!anyCnR([308,309],"row3")){err.push("❌【低壓缺失】Δ出力未引至行3（B相）！");mark(308,309,421);hint(309,421);}
+      if(!anyCnR([301,312],"row1")){err.push("❌【低壓缺失】Δ接地頂點（TR1_X1↔TR3_X4短接處）未引至被接地線！");mark(301,312,401);hint(301,401);}
+      if(!anyCnR([304,305],"row2")){err.push("❌【低壓缺失】Δ出力未引至A相低壓線！");mark(304,305,411);hint(305,411);}
+      if(!anyCnR([308,309],"row3")){err.push("❌【低壓缺失】Δ出力未引至B相低壓線！");mark(308,309,421);hint(309,421);}
     }else if(CQ===6){
       if(!cn(304,308)){hint(304,308);}if(!cn(308,312)){hint(308,312);}
       if(!(cn(304,308)&&cn(308,312))){err.push("❌【低壓缺失】Y中性點未串接！");mark(304,308,312);}
-      if(!anyCnR([304,308,312],"row1")){err.push("❌【低壓缺失】Y中性點未引至行1！");mark(401);hint(312,401);}
-      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1未引至行2！");mark(301,411);hint(301,411);}
-      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1未引至行3！");mark(305,421);hint(305,421);}
-      if(!cnR(309,"row4")){err.push("❌【低壓缺失】TR3_X1未引至行4！");mark(309,431);hint(309,431);}
+      if(!anyCnR([304,308,312],"row1")){err.push("❌【低壓缺失】Y中性點未引至被接地線！");mark(401);hint(312,401);}
+      if(!cnR(301,"row2")){err.push("❌【低壓缺失】TR1_X1未引至A相低壓線！");mark(301,411);hint(301,411);}
+      if(!cnR(305,"row3")){err.push("❌【低壓缺失】TR2_X1未引至B相低壓線！");mark(305,421);hint(305,421);}
+      if(!cnR(309,"row4")){err.push("❌【低壓缺失】TR3_X1未引至C相低壓線！");mark(309,431);hint(309,431);}
     }
 
     // 8. 行1→系統接地口48
     if(!cnR(48,"row1")){
-      err.push("❌【接地缺失】行1未引至系統被接地口(48)！");mark(48,401,402);
+      err.push("❌【接地缺失】被接地線未引至系統被接地口(48)！");mark(48,401,402);
       hint(401,48);
     }
 
@@ -773,7 +766,12 @@ function checkWiring(){
       RES.innerHTML=`🎉【監評配線審查：合格！】\n幹線引入✓ LA分接順序✓ 避雷器接地✓\n外殼保護接地✓ 低壓結線✓ 系統接地✓\n本題配線完全正確！${wt}`;
     }else{
       RES.className="res er";
-      RES.innerHTML=`📋【監評配線審查：不合格】\n發現 ${err.length} 項缺失\n▪ 黃色框＝缺失節點  ▪ 白色虛線＝應接位置：\n\n${err.join("\n")}${wrn.length?"\n\n"+wrn.join("\n"):""}`;
+      const gaugeErr=err.filter(msg=>msg.includes("線徑錯誤"));
+      const otherErr=err.filter(msg=>!msg.includes("線徑錯誤"));
+      const gaugeBlock=gaugeErr.length
+        ? `🚨【線徑錯誤：請先切換正確線徑再重接】\n${gaugeErr.join("\n")}\n\n`
+        : "";
+      RES.innerHTML=`📋【監評配線審查：不合格】\n發現 ${err.length} 項缺失\n▪ 紅色粗線＝錯誤線路  ▪ 黃色框＝缺失節點  ▪ 白色虛線＝應接位置：\n\n${gaugeBlock}${otherErr.join("\n")}${wrn.length?"\n\n"+wrn.join("\n"):""}`;
     }
     draw();
   }catch(ex){
