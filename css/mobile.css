@@ -14,7 +14,7 @@ h1{color:#f1c40f;margin:0 0 3px;font-size:17px;text-align:center;text-shadow:1px
 .ba{background:#2471a3}.bp{background:#d35400}.bp.on{background:#27ae60}.bq{background:#7d3c98}.br{background:#c0392b}.bc{background:#239b56;grid-column:1 / -1}
 .wrap{width:100%;display:block;max-width:none;padding:10px}
 .canvas-scroll{width:100%;overflow:auto;border:1px solid #333;border-radius:9px;background:#0f0f0f;-webkit-overflow-scrolling:touch}
-canvas{display:block;background:#1a1a1a;border:2px solid #3a3a3a;border-radius:8px;cursor:crosshair;touch-action:manipulation}
+canvas{display:block;width:820px;height:auto;background:#1a1a1a;border:2px solid #3a3a3a;border-radius:8px;cursor:crosshair;touch-action:manipulation}
 .panel{margin-top:10px;background:#242424;padding:10px;border-radius:8px;border:1px solid #3a3a3a;display:flex;flex-direction:column;gap:9px}
 .panel h3{color:#f1c40f;margin:0;font-size:14px;line-height:1.45}
 .panel .mrow,.panel .ag{display:none}

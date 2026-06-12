@@ -40,11 +40,34 @@ function boxesOverlap(boxes) {
   return boxes.some((a, i) => boxes.slice(i + 1).some(b => Math.abs(a.cx - b.cx) < w + 20));
 }
 
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
 for (let q = 1; q <= 6; q++) {
   ctx.initLayout(q);
   const sp = ctx.SP[q];
   const boxes = ctx.transformerBoxes(sp);
+  const byId = id => ctx.nodes.find(n => n.id === id);
   if (boxesOverlap(boxes)) failures.push(`Q${q}: 變壓器箱體重疊`);
+
+  if (sp.tr === 2 && dist(byId(304), byId(305)) > 260) {
+    failures.push(`Q${q}: 手機版 TR1 X4 到 TR2 X1 距離過大，不利點選`);
+  }
+  if (sp.tr === 3) {
+    [[304,305],[308,309],[304,308],[308,312]].forEach(([a,b]) => {
+      if (byId(a) && byId(b) && dist(byId(a), byId(b)) > 285) {
+        failures.push(`Q${q}: 手機版 ${a} 到 ${b} 距離過大，不利串接`);
+      }
+    });
+  }
+  [[99,0],[45,1],[48,2]].forEach(([id, idx]) => {
+    const n = byId(id);
+    const [gx, gy] = ctx.LAYOUT.ground[idx];
+    if (Math.abs(n.x - gx) > 1 || Math.abs(n.y - (gy - 2)) > 1) {
+      failures.push(`Q${q}: 接地點 ${id} 未使用手機版 LAYOUT.ground 位置`);
+    }
+  });
 
   ctx.nodes.forEach(n => {
     if (n.x < 0 || n.x > canvas.width || n.y < 0 || n.y > canvas.height) {
@@ -54,7 +77,6 @@ for (let q = 1; q <= 6; q++) {
   });
 
   const usedLv = new Set();
-  const byId = id => ctx.nodes.find(n => n.id === id);
   const add = (a, b, g = 22) => {
     const n1 = byId(a);
     const n2 = byId(b);

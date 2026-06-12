@@ -31,9 +31,9 @@ function initLayout(q){
     nodes.push(NN(g.coBotId,`CO_${g.ph}↓`, g.cox, LAYOUT.device.coNodeY[1], "co_bot"));
   });
 
-  nodes.push(NN(99,"(99)LA接地口",490,200,"gnd_pipe"));
-  nodes.push(NN(45,"(45)外殼接地口",490,453,"gnd_box"));
-  nodes.push(NN(48,"(48)系統接地口",490,518,"gnd_sys"));
+  nodes.push(NN(99,"(99)LA接地口",LAYOUT.ground[0][0],LAYOUT.ground[0][1]-2,"gnd_pipe"));
+  nodes.push(NN(45,"(45)外殼接地口",LAYOUT.ground[1][0],LAYOUT.ground[1][1]-2,"gnd_box"));
+  nodes.push(NN(48,"(48)系統接地口",LAYOUT.ground[2][0],LAYOUT.ground[2][1]-2,"gnd_sys"));
 
   transformerBoxes(sp).forEach(addTransformerNodes);
 

@@ -14,6 +14,15 @@ function clearReviewState(){
   if(RES) RES.style.display="none";
 }
 
+function focusMobileCanvas(){
+  if(!document.querySelector) return;
+  const sc=document.querySelector(".canvas-scroll");
+  if(!sc) return;
+  requestAnimationFrame(()=>{
+    sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2);
+  });
+}
+
 // ═══════════════════ 繪圖 ═══════════════════
 function drawPoleModule(){
   const p=LAYOUT.pole;
@@ -554,7 +563,7 @@ function switchQuiz(q){
   showP=false; showMaterials=false;
   const pb=document.getElementById("pbtn");
   if(pb){pb.classList.remove("on"); pb.innerText="固定預設：X2-X3";}
-  initLayout(q); draw();
+  initLayout(q); draw(); focusMobileCanvas();
 }
 function togglePreset(){
   showP=!showP;
@@ -568,7 +577,7 @@ function clearWires(){
   initLayout(CQ);showP=false;showMaterials=false;
   const pb=document.getElementById("pbtn");
   if(pb){pb.classList.remove("on"); pb.innerText="固定預設：X2-X3";}
-  DH&&DH.classList.remove("show"); draw();
+  DH&&DH.classList.remove("show"); draw(); focusMobileCanvas();
 }
 function enterQuiz(){clearWires();}
 
@@ -604,7 +613,7 @@ function showAnswer(){
       add(w.from,w.to,w.g||22);
     }
   });
-  draw();
+  draw(); focusMobileCanvas();
 }
 
 // ═══════════════════ 配線審查 ═══════════════════
