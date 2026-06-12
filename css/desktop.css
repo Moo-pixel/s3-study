@@ -22,6 +22,7 @@
   .br{background:#c0392b;color:#fff}.br:hover{background:#a93226}
   .bc{background:#239b56;color:#fff}.bc:hover{background:#1d8348}
   .ag{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .ag .btn:only-child{grid-column:1/-1}
   .res{padding:9px;border-radius:5px;font-weight:700;display:none;white-space:pre-line;font-size:12px;line-height:1.6}
   .ok{background:#1e8449;color:#fff}.er{background:#922b21;color:#fff}
   .dh{display:none;background:#7d3c98;color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:4px;text-align:center}

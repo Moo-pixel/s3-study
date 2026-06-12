@@ -2,10 +2,78 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=desktop.html">
-<title>s3-study mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>乙級室內配線技術士——第三站手機版</title>
+<link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
-  <a href="desktop.html">目前請使用桌機版</a>
+<div class="mobile-shell">
+  <div class="mobile-top">
+    <h1>乙級室內配線技術士——第三站手機版</h1>
+    <div class="subtitle">Ver 3.6 ｜手機版：大畫布可左右滑動</div>
+    <div class="qsel">
+      <button class="qbtn active" id="qb1" onclick="switchQuiz(1)">試題一<br><small>V-V 220V</small></button>
+      <button class="qbtn" id="qb2" onclick="switchQuiz(2)">試題二<br><small>V-V 燈力</small></button>
+      <button class="qbtn" id="qb3" onclick="switchQuiz(3)">試題三<br><small>Δ-Δ 220V</small></button>
+      <button class="qbtn" id="qb4" onclick="switchQuiz(4)">試題四<br><small>開Y-V 燈力</small></button>
+      <button class="qbtn" id="qb5" onclick="switchQuiz(5)">試題五<br><small>開Y-V 220V</small></button>
+      <button class="qbtn" id="qb6" onclick="switchQuiz(6)">試題六<br><small>Δ-Y 380V</small></button>
+    </div>
+    <div class="mobile-toolbar">
+      <div class="mrow">
+        <span style="font-size:12px;color:#f1c40f;font-weight:700">線徑：</span>
+        <label class="go g14"><input type="radio" name="g" value="14" onchange="CG=14"> 14mm²</label>
+        <label class="go g22"><input type="radio" name="g" value="22" checked onchange="CG=22"> 22mm²</label>
+      </div>
+      <button class="btn ba" onclick="showAnswer()">標準答案</button>
+      <button class="btn bq" onclick="enterQuiz()">測驗模式</button>
+      <button class="btn br" onclick="clearWires()">清除連線</button>
+      <button class="btn bc" onclick="checkWiring()">配線審查</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="canvas-scroll">
+      <canvas id="wireCanvas" width="1080" height="1180"></canvas>
+    </div>
+    <div class="panel">
+      <h3 id="qtitle">載入中…</h3>
+      <div class="mrow">
+        <span style="font-size:11px;color:#f1c40f;font-weight:700">線徑：</span>
+        <label class="go g14"><input type="radio" name="g" value="14" onchange="CG=14"> 14mm²</label>
+        <label class="go g22"><input type="radio" name="g" value="22" checked onchange="CG=22"> 22mm²</label>
+      </div>
+      <div id="qguide" class="guide"></div>
+      <div class="ag">
+        <button class="btn ba" onclick="showAnswer()">顯示標準答案</button>
+      </div>
+      <div class="ag">
+        <button class="btn bq" onclick="enterQuiz()">進入測驗模式</button>
+        <button class="btn br" onclick="clearWires()">清除連線</button>
+      </div>
+      <button class="btn bc" style="width:100%" onclick="checkWiring()">配線審查</button>
+      <div id="dh" class="dh">連線已選取（高亮）— 再點一次刪除 或按 Delete</div>
+      <div id="res" class="res"></div>
+      <div class="leg">
+        <div>■ <span style="color:#b87333">銅棕弧線</span>＝X2-X3銅片內短（固定）</div>
+        <div>■ <span style="color:#f1c40f">黃</span>＝高壓線 22mm²</div>
+        <div>■ <span style="color:#5dade2">藍</span>＝LA引線 14mm²</div>
+        <div>■ <span style="color:#2ecc71">綠</span>＝接地線</div>
+        <div>■ <span style="color:#e67e22">橙</span>＝低壓線</div>
+        <div>○ <span style="color:#f1c40f">黃色框</span>＝審查缺失節點</div>
+        <div>? <span style="color:#fff">白色虛線</span>＝審查後應接位置提示</div>
+      </div>
+      <div class="tip">連線：點圓圈A → 點圓圈B<br>刪線：在連線上點兩次（第一次高亮，第二次刪除）<br>手機可左右滑動畫布，接點已放大方便操作。</div>
+    </div>
+  </div>
+</div>
+<script src="js/quiz-data.js?v=19"></script>
+<script src="js/layout-mobile.js?v=19"></script>
+<script src="js/node-map.js?v=19"></script>
+<script src="js/answer-spec.js?v=19"></script>
+<script src="js/standard-wires.js?v=19"></script>
+<script src="js/route-picker.js?v=19"></script>
+<script src="js/check-rules.js?v=19"></script>
+<script src="js/hit-test.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
 </body>
 </html>

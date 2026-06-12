@@ -1,5 +1,5 @@
 // Rule-based audit helpers for wiring review.
-// This layer is intentionally data-driven from standard-wires.js.
+// This layer is intentionally data-driven from answer-spec.js.
 function buildAuditGraph(nodes,conns,presets){
   const adj={};
   nodes.forEach(n=>adj[n.id]=new Set());
@@ -28,9 +28,46 @@ function directConnsBetween(conns,a,b){
   );
 }
 
+function buildStandardRowHintTargets(nodes,quizId){
+  const byId=id=>nodes.find(n=>n.id===id);
+  const targetsByWireId=new Map();
+  const usedLv=new Set();
+  const standardConns=[];
+  const wires=typeof getStandardWires==="function" ? getStandardWires(quizId) : getAnswerWires(quizId);
+
+  wires.forEach(w=>{
+    const src=byId(w.from);
+    if(!src) return;
+    if(w.toRow){
+      let tap=null;
+      if(typeof pickBestLvTap==="function"){
+        tap=pickBestLvTap({
+          from:src,
+          row:w.toRow,
+          nodes,
+          usedLv,
+          existingConns:standardConns,
+        });
+      }
+      if(!tap) tap=nodes.filter(n=>n.row===w.toRow&&!usedLv.has(n.id))[0]||null;
+      if(tap){
+        targetsByWireId.set(w.id,tap);
+        usedLv.add(tap.id);
+        standardConns.push({n1:src,n2:tap,g:w.g||22});
+      }
+      return;
+    }
+    const dst=byId(w.to);
+    if(dst) standardConns.push({n1:src,n2:dst,g:w.g||22});
+  });
+
+  return targetsByWireId;
+}
+
 function runModularRules({nodes,conns,presets,quizId,sp}){
   const graph=buildAuditGraph(nodes,conns,presets);
   const byId=id=>nodes.find(n=>n.id===id);
+  const standardRowHintTargets=buildStandardRowHintTargets(nodes,quizId);
   const result={errors:[],warnings:[],marks:new Set(),hints:[],connMarks:[]};
   const mark=(...ids)=>ids.forEach(id=>result.marks.add(id));
   const hint=(a,b)=>{
@@ -43,23 +80,25 @@ function runModularRules({nodes,conns,presets,quizId,sp}){
     hints.forEach(([a,b])=>hint(a,b));
   };
 
-  getStandardWires(quizId).forEach(w=>{
+  getAnswerWires(quizId).forEach(w=>{
     if(w.toRow){
       const rowName=typeof rowDisplayName==="function"?rowDisplayName(w.toRow):w.toRow;
       const targets=nodes.filter(n=>n.row===w.toRow);
       const ok=targets.some(n=>graph.connected(w.from,n.id));
       if(!ok){
+        const hintTarget=standardRowHintTargets.get(w.id)||targets[0];
         addError(
-          `❌【標準答案缺線】${w.from} 未接到${rowName}任一合理接點！`,
+          `❌【標準答案缺線】${w.desc || w.from}：${w.from} 未接到${rowName}任一合理接點！`,
           [w.from,...targets.map(n=>n.id)],
-          targets[0]?[[w.from,targets[0].id]]:[]
+          hintTarget?[[w.from,hintTarget.id]]:[]
         );
       }
       return;
     }
-    if(!graph.connected(w.from,w.to)){
+    const ok=w.direct ? directConnsBetween(conns,w.from,w.to).length>0 : graph.connected(w.from,w.to);
+    if(!ok){
       addError(
-        `❌【標準答案缺線】應接 ${w.from} ↔ ${w.to}，目前未連通！`,
+        `❌【標準答案缺線】${w.desc || "必要線路"}：${w.direct ? "應直接接" : "應接通"} ${w.from} ↔ ${w.to}！`,
         [w.from,w.to],
         [[w.from,w.to]]
       );
@@ -81,6 +120,16 @@ function runModularRules({nodes,conns,presets,quizId,sp}){
     }
   });
 
+  // Grounding rule: protective grounding (45 / transformer G) must not be mixed
+  // with system grounded conductor (48 / low-voltage grounded row).
+  const caseGroundIds=sp.tr===3 ? [203,206,209] : [203,206];
+  if(graph.connected(45,48) || caseGroundIds.some(id=>graph.connected(id,48))){
+    addError(
+      "💥【判定0分】外殼接地(45/G)不可與系統被接地口(48)混接！",
+      [45,48,...caseGroundIds]
+    );
+  }
+
   // Construction rule: one C-ring tap may only be used by one wire.
   const lvTapUse={};
   conns.forEach(c=>{
@@ -96,7 +145,7 @@ function runModularRules({nodes,conns,presets,quizId,sp}){
   });
 
   // Gauge rule for direct wires: LA leads must be 14mm², other standard direct wires default to 22mm².
-  getStandardWires(quizId).forEach(w=>{
+  getAnswerWires(quizId).forEach(w=>{
     if(w.toRow){
       const rowName=typeof rowDisplayName==="function"?rowDisplayName(w.toRow):w.toRow;
       const expected=w.g||22;

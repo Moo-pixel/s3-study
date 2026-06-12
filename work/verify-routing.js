@@ -24,6 +24,7 @@ vm.createContext(ctx);
   "js/quiz-data.js",
   "js/layout-desktop.js",
   "js/node-map.js",
+  "js/answer-spec.js",
   "js/standard-wires.js",
   "js/route-picker.js",
 ].forEach(file => {

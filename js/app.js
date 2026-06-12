@@ -7,6 +7,13 @@ let showMaterials=false;
 let errN=new Set(),errC=new Set();
 let hintConns=[];   // 審查後：應接但未接的連線提示（白色虛線）
 
+function clearReviewState(){
+  errN=new Set();
+  errC=new Set();
+  hintConns=[];
+  if(RES) RES.style.display="none";
+}
+
 // ═══════════════════ 繪圖 ═══════════════════
 function drawPoleModule(){
   const p=LAYOUT.pole;
@@ -94,7 +101,7 @@ function drawTransformerModule(sp){
 
 function draw(){
   if(!ctx) return;
-  ctx.clearRect(0,0,980,860);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   const sp=SP[CQ];
   const isSG=sp.sg;
 
@@ -112,8 +119,6 @@ function draw(){
     if(!c.n1||!c.n2) return;
     if(c.copper){
       drawCopperJumper(c.n1,c.n2);
-    } else if(c.p&&showP){
-      drawWire(c.n1,c.n2,"#556677",2,[6,4]);
     }
     ctx.setLineDash([]);
   });
@@ -472,6 +477,14 @@ function onMD(e){
   const mx=(e.clientX-r.left)*scaleX;
   const my=(e.clientY-r.top)*scaleY;
 
+  // 已選取連線的紫色 X 圓鈕要能直接刪除；它不一定剛好落在線段命中路徑上。
+  if(selC){
+    const m=bzMid(selC.n1,selC.n2);
+    if(Math.hypot(mx-m.x,my-m.y)<=18){
+      delConn(selC); return;
+    }
+  }
+
   // 點節點優先
   for(const nd of nodes){
     if(Math.hypot(mx-nd.x,my-nd.y)<=nd.r+8){
@@ -479,10 +492,13 @@ function onMD(e){
         selN=nd; selC=null;
         DH&&DH.classList.remove("show");
       } else if(selN.id!==nd.id){
-        // 考場配妥線只是提示，不可阻擋學生練習同一條線；只檢查學生已畫線是否重複。
+        // 只檢查學生已畫線是否重複；X2-X3 內部銅片不阻擋外部練習接線。
         const dup=conns.some(c=>
           (c.n1.id===selN.id&&c.n2.id===nd.id)||(c.n1.id===nd.id&&c.n2.id===selN.id));
-        if(!dup){conns.push({n1:selN,n2:nd,g:CG});errN=new Set();errC=new Set();}
+        if(!dup){
+          conns.push({n1:selN,n2:nd,g:CG});
+          clearReviewState();
+        }
         selN=null;
       } else {
         selN=null;
@@ -493,7 +509,7 @@ function onMD(e){
 
   // 點連線
   for(const c of conns){
-    if(distToWire(c.n1,c.n2,mx,my)<=12){
+    if(distToWire(c.n1,c.n2,mx,my)<=18){
       if(selC===c){
         // 第二次點同一條線 → 直接刪除
         delConn(c); return;
@@ -513,7 +529,10 @@ function onMD(e){
 }
 function delConn(c){
   const i=conns.indexOf(c);
-  if(i>=0){conns.splice(i,1);errN=new Set();errC=new Set();}
+  if(i>=0){
+    conns.splice(i,1);
+    clearReviewState();
+  }
   selC=null;
   DH&&DH.classList.remove("show");
   draw();
@@ -534,20 +553,21 @@ function switchQuiz(q){
   document.getElementById("qguide").innerText=SP[q].guide;
   showP=false; showMaterials=false;
   const pb=document.getElementById("pbtn");
-  pb.classList.remove("on"); pb.innerText="顯示考場配妥";
+  if(pb){pb.classList.remove("on"); pb.innerText="固定預設：X2-X3";}
   initLayout(q); draw();
 }
 function togglePreset(){
   showP=!showP;
   const pb=document.getElementById("pbtn");
+  if(!pb) return;
   pb.classList.toggle("on",showP);
-  pb.innerText=showP?"隱藏考場配妥":"顯示考場配妥";
+  pb.innerText="固定預設：X2-X3";
   draw();
 }
 function clearWires(){
   initLayout(CQ);showP=false;showMaterials=false;
   const pb=document.getElementById("pbtn");
-  pb.classList.remove("on"); pb.innerText="顯示考場配妥";
+  if(pb){pb.classList.remove("on"); pb.innerText="固定預設：X2-X3";}
   DH&&DH.classList.remove("show"); draw();
 }
 function enterQuiz(){clearWires();}
@@ -596,7 +616,7 @@ function checkWiring(){
     const adj={};
     nodes.forEach(n=>adj[n.id]=new Set());
     // 只有考生連線 + X2-X3銅片內短（copper:true）納入審查。
-    // p:true 的考場配妥線只是參考提示，不納入審查，考生仍須自己練習檢查/修復。
+    // 除 X2-X3 外，全部關鍵線都必須由考生自行畫出並確認。
     const auditConns=[...conns, ...presets.filter(c=>c.copper)];
     auditConns.forEach(c=>{
       if(!c||!c.n1||!c.n2)return;
@@ -628,6 +648,7 @@ function checkWiring(){
       (modular.connMarks||[]).forEach(c=>errC.add(c));
     }
 
+    if(typeof runModularRules!=="function"){
     // 1. 幹線→CO電源側
     if(sp.sg){
       if(!cn(1,104)||!cn(3,106)){
@@ -757,6 +778,7 @@ function checkWiring(){
 
     // 標示錯誤連線
     conns.forEach(c=>{if(errN.has(c.n1.id)||errN.has(c.n2.id))errC.add(c);});
+    }
     draw();
 
     RES.style.display="block";
@@ -786,7 +808,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   ctx=canvas.getContext("2d");
   RES=document.getElementById("res");
   DH=document.getElementById("dh");
-  canvas.addEventListener("mousedown",onMD);
+  if(window.PointerEvent) canvas.addEventListener("pointerdown",onMD);
+  else canvas.addEventListener("mousedown",onMD);
   document.addEventListener("keydown",onKD);
   switchQuiz(1);
 });

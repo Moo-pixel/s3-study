@@ -1,4 +1,4 @@
-function NN(id,lbl,x,y,type,row=""){return{id,lbl,x,y,type,row,r:7};}
+function NN(id,lbl,x,y,type,row=""){return{id,lbl,x,y,type,row,r:LAYOUT.nodeRadius||7};}
 
 function addTransformerNodes(box){
   const hvIds=[[201,202],[204,205],[207,208]][box.idx-1];
@@ -48,10 +48,4 @@ function initLayout(q){
   presets.push({n1:f(302),n2:f(303),g:99,copper:true});
   presets.push({n1:f(306),n2:f(307),g:99,copper:true});
   if(is3) presets.push({n1:f(310),n2:f(311),g:99,copper:true});
-
-  if(q===3||q===6){
-    presets.push({n1:f(202),n2:f(204),g:22,p:true});
-    presets.push({n1:f(205),n2:f(207),g:22,p:true});
-    presets.push({n1:f(208),n2:f(201),g:22,p:true});
-  }
 }
